@@ -2,15 +2,15 @@
 
 /*
   Plugin Name: Mattermost Notifications
-  Plugin URI: 
+  Plugin URI: https://github.com/Schoaf/qa-mattermost-notifications/
   Plugin Description: Sends Mattermost notifications of various events.
   Plugin Version: 0.1
   Plugin Date: 2016-08-19
   Plugin Author: Andreas Scharf
-  Plugin Author URI:
+  Plugin Author URI: https://github.com/Schoaf
   Plugin License: MIT
   Plugin Minimum Question2Answer Version: 1.5
-  Plugin Update Check URI:
+  Plugin Update Check URI: https://raw.githubusercontent.com/Schoaf/qa-mattermost-notifications/master/qa-plugin.php
 */
 
 if (!defined('QA_VERSION')) { // don't allow this page to be requested directly from browser
