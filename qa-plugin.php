@@ -4,7 +4,7 @@
   Plugin Name: Mattermost Notifications
   Plugin URI: https://github.com/Schoaf/qa-mattermost-notifications/
   Plugin Description: Sends Mattermost notifications of various events.
-  Plugin Version: 0.1
+  Plugin Version: 0.2
   Plugin Date: 2016-08-19
   Plugin Author: Andreas Scharf
   Plugin Author URI: https://github.com/Schoaf
