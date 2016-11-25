@@ -4,12 +4,13 @@
   Mattermost Notifications
 
   File: qa-plugin/mattermost-notifications/qa-mattermost-notifications-event.php
-  Version: 0.2
-  Date: 2016-08-30
+  Version: 0.3
+  Date: 2016-11-25
   Description: Event module class for Mattermost notifications plugin
 */
 
 require_once QA_INCLUDE_DIR.'qa-app-posts.php';
+require_once QA_INCLUDE_DIR.'qa-app-mailing.php';
 
 class qa_mattermost_notifications_event {
 
@@ -45,6 +46,11 @@ class qa_mattermost_notifications_event {
 	{
 		require_once $this->plugindir . 'Mattermost' . DIRECTORY_SEPARATOR . 'Mattermost.php';
 		
+		$categoryid = $params['categoryid'];
+		$category=qa_category_path(qa_db_single_select(qa_db_category_nav_selectspec($categoryid, true)), $categoryid);
+		$category_slug = $category[$categoryid]['tags'];
+		$category_name = $category[$categoryid]['title'];
+		
 		$category_in_question = $params['categoryid'];
 		$tags_in_question_string = $params['tags'];
 		$tags_in_question = explode( ',', $tags_in_question_string );
@@ -59,7 +65,6 @@ class qa_mattermost_notifications_event {
 			
 			// check categories:
 			// we dont get the category in the post variable so we cannot check it here.
-			/*
 			$filter_categories_string = qa_opt($prefix.'categories_'.$index);
 			if( $filter_categories_string == '*' )
 			{
@@ -71,14 +76,13 @@ class qa_mattermost_notifications_event {
 				
 				foreach( $filter_categories as $filter_category )
 				{
-					if( trim($category_in_question) == $filter_category )
+					if( trim($category_slug) == $filter_category )
 					{
 						$matches_category_filter = true;
 						break; // we dont need to check any further.
 					}
 				}
 			}
-			*/
 			
 			//only check tags if category did match.
 			if( $matches_category_filter == true )
@@ -109,7 +113,7 @@ class qa_mattermost_notifications_event {
 					$notifier = new Mattermost\Mattermost( $webhook_url );
 					try
 					{	
-						$result = $notifier->message_room($channel_id, $bot_name, $user_full_name, $user_link, $title, $title_link, $question_content, $tags_in_question_string, $color, $icon_url, $pretext );
+						$result = $notifier->message_room($channel_id, $bot_name, $user_full_name, $user_link, $title, $title_link, $question_content, $tags_in_question_string, $category_name, $color, $icon_url, $pretext );
 					}
 					catch (Mattermost\HipChat_Exception $e) 
 					{
@@ -142,38 +146,6 @@ class qa_mattermost_notifications_event {
 		}
 		
 		return $userdisplayhandle;
-
-		/*
-		$emailbody = 'Profile set='.isset($userprofile['name']).' Profile empty='.empty($userprofile['name'])."<br>\n";
-		if ( isset($userprofile['name']) && !empty($userprofile['name']) )
-		{
-			$emailbody.= print_r( $userprofile, true );
-		}
-		
-		$emailbody .= 'ProfileS set='.isset($userprofiles['name']).' ProfileS empty='.empty($userprofiles['name'])."<br>\n";
-		if ( isset($userprofiles['name']) && !empty($userprofiles['name']) )
-		{
-			$emailbody.= print_r( $userprofiles, true );
-		}
-		$this->category_email_send_email(array(
-                        'fromemail' => 'admin@ask.agfahealthcare.com',
-                        'fromname'  => 'AskAgfa',
-                        'toemail'   => 'andreas.scharf@agfa.com',
-                        'toname'    => 'Andreas Scharf',
-                        'bcclist'   => '',
-                        'subject'   => 'Debug Ask Agfa user name',
-                        'body'      => $emailbody,
-                        'html'      => false,
-            ));
-		
-		if ( isset($userprofile['name']) && !empty($userprofile['name']) )
-		{
-			return qa_html($userprofile['name']);
-		}
-		
-
-		return isset($handle) ? $handle : qa_lang('main/anonymous');;
-		*/
 	}
 	
   private function build_new_question_message($who, $title, $url) {
@@ -205,48 +177,4 @@ class qa_mattermost_notifications_event {
 			}
 		}
 	}
-	
-	// Only for testing. This method can be removed (Andi - 2016-09-07)
-	function category_email_send_email($params) {
-            if (qa_to_override(__FUNCTION__)) {
-                  $args = func_get_args();
-                  return qa_call_override(__FUNCTION__, $args);
-            }
-
-            require_once QA_INCLUDE_DIR . 'qa-class.phpmailer.php';
-
-            $mailer = new PHPMailer();
-            $mailer->CharSet = 'utf-8';
-
-            $mailer->From     = $params['fromemail'];
-            $mailer->Sender   = $params['fromemail'];
-            $mailer->FromName = $params['fromname'];
-            if (isset($params['toemail'])) {
-                  $mailer->AddAddress($params['toemail'], $params['toname']);
-            }
-            $mailer->Subject = $params['subject'];
-            $mailer->Body = $params['body'];
-            if (isset($params['bcclist'])) {
-                  foreach ($params['bcclist'] as $email) {
-                        $mailer->AddBCC($email);
-                  }
-            }
-
-            if ($params['html']) $mailer->IsHTML(true);
-
-            if (qa_opt('smtp_active')) {
-                  $mailer->IsSMTP();
-                  $mailer->Host = qa_opt('smtp_address');
-                  $mailer->Port = qa_opt('smtp_port');
-
-                  if (qa_opt('smtp_secure')) $mailer->SMTPSecure = qa_opt('smtp_secure');
-
-                  if (qa_opt('smtp_authenticate')) {
-                        $mailer->SMTPAuth = true;
-                        $mailer->Username = qa_opt('smtp_username');
-                        $mailer->Password = qa_opt('smtp_password');
-                  }
-            }
-            return $mailer->Send();
-      }
 }

@@ -1,13 +1,18 @@
 <?php
+/*
+  Mattermost Notifications
 
-// Version v1.2: http://git.io/13fxXw
+  File: qa-plugin/mattermost-notifications/Mattermost/Mattermost.php
+  Version: 0.3
+  Date: 2016-11-25
+  Description: Mattermost API to access channels
+*/
 
 namespace Mattermost;
 
 /**
  * Library for interacting with the Mattermost.
- *
- * @see ...
+ * Inspired by https://github.com/jhubert/qa-hipchat-notifications
  */
 class Mattermost {
 
@@ -18,13 +23,6 @@ class Mattermost {
    */
   const STATUS_BAD_RESPONSE = -1; // Not an HTTP response code
   const STATUS_OK = 200;
-  const STATUS_BAD_REQUEST = 400;
-  const STATUS_UNAUTHORIZED = 401;
-  const STATUS_FORBIDDEN = 403;
-  const STATUS_NOT_FOUND = 404;
-  const STATUS_NOT_ACCEPTABLE = 406;
-  const STATUS_INTERNAL_SERVER_ERROR = 500;
-  const STATUS_SERVICE_UNAVAILABLE = 503;
 
   /**
    * Colors for rooms/message
@@ -36,8 +34,6 @@ class Mattermost {
    */
   const VERSION_1 = 'v1';
 
-  private $api_target;
-  private $auth_token;
   private $verify_ssl = true;
   private $proxy;
   private $webhook_url;
@@ -60,7 +56,7 @@ class Mattermost {
    * Send a message to a Mattermost room
    * @author: andreas.scharf
    */
-	public function message_room( $channel_id, $bot_name = 'AskAgfa', $author_name, $author_link, $title, $title_link, $message, $tags, 
+	public function message_room( $channel_id, $bot_name = 'AskAgfa', $author_name, $author_link, $title, $title_link, $message, $tags, $category, 
 								$color = self::COLOR_GREEN,
 								$icon_url = 'http://ask.agfahealthcare.com/qa-theme/q2a_logo_3_v12_small.gif',
 								$pretext = 'A new question has arrived:' ) 
@@ -80,8 +76,8 @@ class Mattermost {
 				'title' 		=> utf8_encode($title),
 				'title_link' 	=> utf8_encode($title_link),
 				'fields'		=> array( 
-										array( 'short' => true, 'title' => 'Tags:', 'value' => $this->create_tags_with_links( $tags ) )
-										//array( 'short' => true, 'title' => 'Category:', 'value' => $this->create_category_link( $category ) )  //currently not working
+										array( 'short' => true, 'title' => 'Tags:', 'value' => $this->create_tags_with_links( $tags ) ),
+										array( 'short' => true, 'title' => 'Category:', 'value' => $this->create_category_link( $category ) )
 									)
 			))
     );
@@ -112,33 +108,6 @@ class Mattermost {
 	}
 
   /////////////////////////////////////////////////////////////////////////////
-  // User functions
-  /////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * Get information about a user
-   *
-   * @see http://api.hipchat.com/docs/api/method/users/show
-   */
-  public function get_user($user_id) {
-    $response = $this->make_request("users/show", array(
-      'user_id' => $user_id
-    ));
-    return $response->user;
-  }
-
-  /**
-   * Get list of users
-   *
-   * @see http://api.hipchat.com/docs/api/method/users/list
-   */
-  public function get_users() {
-    $response = $this->make_request('users/list');
-    return $response->users;
-  }
-
-
-  /////////////////////////////////////////////////////////////////////////////
   // Helper functions
   /////////////////////////////////////////////////////////////////////////////
 
@@ -148,7 +117,7 @@ class Mattermost {
    * @param $url        URL to hit.
    * @param $post_data  Data to send via POST. Leave null for GET request.
    *
-   * @throws HipChat_Exception
+   * @throws Mattermost_Exception
    * @return string
    */
   public function curl_request($url, $post_data = null) {
@@ -175,14 +144,14 @@ class Mattermost {
     if (strlen($response) == 0) {
       $errno = curl_errno($ch);
       $error = curl_error($ch);
-      throw new HipChat_Exception(self::STATUS_BAD_RESPONSE,
+      throw new Mattermost_Exception(self::STATUS_BAD_RESPONSE,
         "CURL error: $errno - $error", $url);
     }
 
     // make sure we got a 200
     $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
     if ($code != self::STATUS_OK) {
-      throw new HipChat_Exception($code,
+      throw new Mattermost_Exception($code,
         "HTTP status code: $code, response=$response", $url);
     }
 
@@ -198,36 +167,14 @@ class Mattermost {
    * @param array  $args        Data to send.
    * @param string $http_method HTTP method (GET or POST).
    *
-   * @throws HipChat_Exception
    * @return mixed
    */
   public function make_request($api_method, $args = array(),
                                $http_method = 'GET') {
-    //$args['format'] = 'json';
-    //$args['auth_token'] = $this->auth_token;
-    $url = "$this->api_target/$this->api_version/$api_method";
 	$url = $this->webhook_url;
-	//$url = 'http://viesuhv12.agfahealthcare.com/hooks/45jc4ayefjycpx66s77wbckbfa';
     $post_data = $args;
-/*
-    // add args to url for GET
-    if ($http_method == 'GET') {
-      $url .= '?'.http_build_query($args);
-    } else {
-      $post_data = $args;
-    }
-*/
     $response = $this->curl_request($url, $post_data);
 
-    // make sure response is valid json
-	// it seems that Mattermost does not send a response. Thus the response must be some html OK ?
-	/*
-    $response = json_decode($response);
-    if (!$response) {
-      throw new HipChat_Exception(self::STATUS_BAD_RESPONSE,
-        "Invalid JSON received: $response", $url);
-    }
-*/
     return $response;
   }
 
@@ -259,11 +206,10 @@ class Mattermost {
 
 }
 
-
-class HipChat_Exception extends \Exception {
+class Mattermost_Exception extends \Exception {
   public $code;
   public function __construct($code, $info, $url) {
-    $message = "HipChat API error: code=$code, info=$info, url=$url";
+    $message = "Mattermost API error: code=$code, info=$info, url=$url";
     parent::__construct($message, (int)$code);
   }
 }

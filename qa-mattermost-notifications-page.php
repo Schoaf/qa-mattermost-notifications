@@ -1,4 +1,13 @@
 <?php
+
+/*
+  Mattermost Notifications
+
+  File: qa-plugin/mattermost-notifications/qa-mattermost-notifications-page.php
+  Version: 0.3
+  Date: 2016-11-25
+  Description: Options page for the admin section 'plugins'
+*/
     class qa_mattermost_notifications_page {
 
 	const FIELD_ID_PREFIX = 'mattermost_';
@@ -14,8 +23,8 @@
 								array( 'color', 'Color of message indicator (#000000):', '#289E00' ),
 								array( 'icon_url', 'Icon URL for bots thumbnail (optional):', 'http://ask.agfahealthcare.com/qa-theme/q2a_logo_3_v12_small.gif' ),
 								array( 'pretext', 'Text introducing the new question:', 'A new question has arrived:' ),
-								array( 'tags', 'Include questions with these <strong>tags</strong> only: <br/>(comma separated list, * for no filter)', 'image-area' )
-								//array( 'categories', 'Include questions in these <strong>categories</strong> only: <br/>(comma separated list, * for no filter)', 'Image Area' ) //currently not working
+								array( 'tags', 'Include questions with these <strong>tags</strong> only: <br/>(comma separated list, * for no filter)', 'image-area' ),
+								array( 'categories', 'Include questions in these <strong>categories</strong> only: <br/>(comma separated list, * for no filter)', 'Image Area' ) //currently not working
 								);
 			return $default_fields;
 		}
