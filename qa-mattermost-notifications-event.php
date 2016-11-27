@@ -4,8 +4,8 @@
   Mattermost Notifications
 
   File: qa-plugin/mattermost-notifications/qa-mattermost-notifications-event.php
-  Version: 0.3
-  Date: 2016-11-25
+  Version: 0.4
+  Date: 2016-11-27
   Description: Event module class for Mattermost notifications plugin
 */
 
@@ -58,6 +58,9 @@ class qa_mattermost_notifications_event {
 		
 		$firstField = $prefix.'webhook_url_';
 		$index = 0;
+		
+		$site_url = qa_opt('site_url');
+		
 		while( qa_opt($firstField.$index) ) 
 		{
 			$matches_category_filter = true;
@@ -103,19 +106,22 @@ class qa_mattermost_notifications_event {
 				$pretext = qa_opt($prefix.'pretext_'.$index);
 				$username = isset($handle) ? $handle : qa_lang('main/anonymous');
 				$user_full_name = $this->get_user_full_name( $handle );
-				$user_link = "http://ask.agfahealthcare.com/user/".$username;
+				$user_icon_url = $this->get_user_icon( $handle );
+				$user_link = $site_url."/user/".$username;
 				$title = $params['title'];
 				$title_link = qa_q_path($params['postid'], $params['title'], true);
 				$question_content = $params['text'];
+				$tags_with_links = $this->create_tags_with_links( $tags_in_question );
+				$category_with_link = $this->create_category_link( $category, $categoryid );
 				
 				if( $webhook_url )
 				{
 					$notifier = new Mattermost\Mattermost( $webhook_url );
 					try
 					{	
-						$result = $notifier->message_room($channel_id, $bot_name, $user_full_name, $user_link, $title, $title_link, $question_content, $tags_in_question_string, $category_name, $color, $icon_url, $pretext );
+						$result = $notifier->message_room($channel_id, $bot_name, $user_full_name, $user_icon_url, $user_link, $title, $title_link, $question_content, $tags_with_links, $category_with_link, $color, $icon_url, $pretext );
 					}
-					catch (Mattermost\HipChat_Exception $e) 
+					catch (Mattermost\Mattermost_Exception $e) 
 					{
 						error_log($e->getMessage());
 					}
@@ -148,13 +154,20 @@ class qa_mattermost_notifications_event {
 		return $userdisplayhandle;
 	}
 	
-  private function build_new_question_message($who, $title, $url) {
-    return sprintf("%s asked a new question: <a href=\"%s\">\"%s\"</a>. Do you know the answer?", $who, $url, $title);
-  }
-
-  private function build_new_answer_message($who, $title, $url) {
-    return sprintf("%s answered the question: <a href=\"%s\">\"%s\"</a>.", $who, $url, $title);
-  }
+	private function get_user_icon( $handle )
+	{
+		$is_user_id = false;
+		$useraccount = qa_db_select_with_pending(qa_db_user_account_selectspec($handle,$is_user_id));
+		$blob_id = $useraccount['avatarblobid'];
+		$site_url = qa_opt('site_url');
+		if( empty($blob_id) )
+		{
+			return $site_url."qa-theme/Snow/images/claim-icon.png";
+		}
+		
+		$avatar_url = $site_url.'?qa=image&qa_blobid='.$blob_id.'&qa_size=50';
+		return $avatar_url;
+	}
   
 	private function does_filter_match_post( $filter_tags_string, $tags_in_post )
 	{
@@ -176,5 +189,35 @@ class qa_mattermost_notifications_event {
 				}
 			}
 		}
+	}
+	
+	private function create_tags_with_links($tags_without_links) {
+		$tags_with_links = array();
+		$site_url = qa_opt('site_url');
+		foreach( $tags_without_links as $tag )
+		{
+			$trimmed_tag = trim( $tag );
+			if( !empty( $trimmed_tag ) )
+			{
+				$tags_with_links[] = "[" . $trimmed_tag . '](' . $site_url . 'tag/' . $trimmed_tag .')';
+			}
+		}
+	
+		$formatted_tags = implode( ", ", $tags_with_links );
+		return $formatted_tags;
+	}
+	
+	private function create_category_link( $categories, $selected_category_id )
+	{
+		$trimmed_category_title = trim( $categories[$selected_category_id]['title'] );
+		$category_path = $categories[$selected_category_id]['tags'];
+		$parentid = $categories[$selected_category_id]['parentid'];
+		while ( !empty($parentid) )
+		{
+			$category_path = $categories[$parentid]['tags'] .'/'. $category_path;
+			$parentid = $categories[$parentid]['parentid'];
+		}			
+		$site_url = qa_opt('site_url');
+		return '['.$trimmed_category_title.']('.$site_url.'questions/'.$category_path.')';
 	}
 }

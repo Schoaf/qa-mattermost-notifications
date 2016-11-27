@@ -3,8 +3,8 @@
   Mattermost Notifications
 
   File: qa-plugin/mattermost-notifications/Mattermost/Mattermost.php
-  Version: 0.3
-  Date: 2016-11-25
+  Version: 0.4
+  Date: 2016-11-27
   Description: Mattermost API to access channels
 */
 
@@ -56,7 +56,7 @@ class Mattermost {
    * Send a message to a Mattermost room
    * @author: andreas.scharf
    */
-	public function message_room( $channel_id, $bot_name = 'AskAgfa', $author_name, $author_link, $title, $title_link, $message, $tags, $category, 
+	public function message_room( $channel_id, $bot_name = 'AskAgfa', $author_name, $author_icon, $author_link, $title, $title_link, $message, $tags, $category, 
 								$color = self::COLOR_GREEN,
 								$icon_url = 'http://ask.agfahealthcare.com/qa-theme/q2a_logo_3_v12_small.gif',
 								$pretext = 'A new question has arrived:' ) 
@@ -71,41 +71,19 @@ class Mattermost {
 				'pretext' 		=> utf8_encode($pretext),
 				'text' 			=> utf8_encode($message),
 				'author_name' 	=> utf8_encode($author_name),
-				'author_icon' 	=> utf8_encode("http://ask.agfahealthcare.com/qa-theme/Snow/images/claim-icon.png"),
+				'author_icon' 	=> utf8_encode($author_icon),
 				'author_link' 	=> utf8_encode($author_link),
 				'title' 		=> utf8_encode($title),
 				'title_link' 	=> utf8_encode($title_link),
 				'fields'		=> array( 
-										array( 'short' => true, 'title' => 'Tags:', 'value' => $this->create_tags_with_links( $tags ) ),
-										array( 'short' => true, 'title' => 'Category:', 'value' => $this->create_category_link( $category ) )
+										array( 'short' => true, 'title' => 'Tags:', 'value' => $tags ),
+										array( 'short' => true, 'title' => 'Category:', 'value' => $category )
 									)
 			))
     );
     $response = $this->make_request("rooms/message", $args, 'POST');
     return ($response->status == 'sent');
   }
-  
-	public function create_category_link( $category )
-	{
-		$trimmed_category = trim($category);
-	return '['.$trimmed_category.'](http://ask.agfahealthcare.com/category/'.$trimmed_category.')';
-	}
-	
-	public function create_tags_with_links($tags) {
-		$tags_without_links = explode( ",", $tags );
-		$tags_with_links = array();
-		foreach( $tags_without_links as $tag )
-		{
-			$trimmed_tag = trim( $tag );
-			if( !empty( $trimmed_tag ) )
-			{
-				$tags_with_links[] = "[" . $trimmed_tag . '](http://ask.agfahealthcare.com/tag/' . $trimmed_tag .')';
-			}
-		}
-	
-		$formatted_tags = implode( ", ", $tags_with_links );
-		return $formatted_tags;
-	}
 
   /////////////////////////////////////////////////////////////////////////////
   // Helper functions
