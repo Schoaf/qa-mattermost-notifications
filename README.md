@@ -11,6 +11,7 @@ This plug-in was derived from the HipChat plug-in for Q2A by jhubert (https://gi
 - Post includes author (full name (Warnung)), title, text, tags and category
 - Mattermost post links directly to the question
 - tags and category are links to the page of questions with this tag/category
+- Shows q2a avatar as author icon
 - Currently only new questions get posted to Mattermost
 
 ![Q2A settings page](docs/MattermostPlugin_admin2.png)
