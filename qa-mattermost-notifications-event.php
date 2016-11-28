@@ -63,7 +63,7 @@ class qa_mattermost_notifications_event {
 		
 		while( qa_opt($firstField.$index) ) 
 		{
-			$matches_category_filter = true;
+			$matches_category_filter = false;
 			$matches_tags_filter = false;
 			
 			// check categories:
