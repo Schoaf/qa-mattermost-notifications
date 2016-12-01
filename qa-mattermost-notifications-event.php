@@ -48,7 +48,7 @@ class qa_mattermost_notifications_event {
 		
 		$categoryid = $params['categoryid'];
 		$category=qa_category_path(qa_db_single_select(qa_db_category_nav_selectspec($categoryid, true)), $categoryid);
-		$category_slug = $category[$categoryid]['tags'];
+		$category_slug = trim( $category[$categoryid]['tags'] );
 		$category_name = $category[$categoryid]['title'];
 		
 		$category_in_question = $params['categoryid'];
@@ -68,8 +68,8 @@ class qa_mattermost_notifications_event {
 			
 			// check categories:
 			// we dont get the category in the post variable so we cannot check it here.
-			$filter_categories_string = qa_opt($prefix.'categories_'.$index);
-			if( $filter_categories_string == '*' )
+			$filter_categories_string = trim( qa_opt($prefix.'categories_'.$index) );
+			if( $filter_categories_string == self::MATCH_WILDCARD )
 			{
 				$matches_category_filter = true;
 			}
@@ -79,7 +79,7 @@ class qa_mattermost_notifications_event {
 				
 				foreach( $filter_categories as $filter_category )
 				{
-					if( trim($category_slug) == $filter_category )
+					if( $category_slug == trim( $filter_category ) )
 					{
 						$matches_category_filter = true;
 						break; // we dont need to check any further.
