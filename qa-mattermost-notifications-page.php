@@ -4,8 +4,8 @@
   Mattermost Notifications
 
   File: qa-plugin/mattermost-notifications/qa-mattermost-notifications-page.php
-  Version: 0.4
-  Date: 2016-11-27
+  Version: 0.5
+  Date: 2017-12-10
   Description: Options page for the admin section 'plugins'
 */
     class qa_mattermost_notifications_page {
@@ -20,7 +20,6 @@
 								array( 'webhook_url', 'Incomming webhook URI:', 'http://your.mattermost.server/hooks/secretToken' ),
 								array( 'channel_id', 'Channel to post in:', 'off-topic' ),
 								array( 'bot_name', 'Name of the bot:', 'AskAgfa' ),
-								array( 'color', 'Color of message indicator (#000000):', '#289E00' ),
 								array( 'icon_url', 'Icon URL for bots thumbnail (optional):', 'http://your.mattermost.server/qa-theme/q2a_logo_3_v12_small.gif' ),
 								array( 'pretext', 'Text introducing the new question:', 'A new question has arrived:' ),
 								array( 'categories', 'Include questions in these <strong>categories</strong> only: <br/>(comma separated list, * for no filter)', 'Image Area' ),

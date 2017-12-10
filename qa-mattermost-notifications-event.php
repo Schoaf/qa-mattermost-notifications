@@ -1,11 +1,10 @@
 <?php
-
 /*
   Mattermost Notifications
 
   File: qa-plugin/mattermost-notifications/qa-mattermost-notifications-event.php
-  Version: 0.4
-  Date: 2016-11-27
+  Version: 0.5
+  Date: 2017-12-10
   Description: Event module class for Mattermost notifications plugin
 */
 
@@ -15,6 +14,7 @@ require_once QA_INCLUDE_DIR.'qa-app-mailing.php';
 class qa_mattermost_notifications_event {
 
 	const MATCH_WILDCARD = '*';
+	const COLOR_UNANSWERED_QUESTION = '#ff0000'; //red
 	private $plugindir;
 
   function load_module($directory, $urltoroot)
@@ -101,7 +101,7 @@ class qa_mattermost_notifications_event {
 				$webhook_url = qa_opt($prefix.'webhook_url_'.$index);
 				$channel_id = qa_opt($prefix.'channel_id_'.$index);
 				$bot_name = qa_opt($prefix.'bot_name_'.$index);
-				$color = qa_opt($prefix.'color_'.$index);
+				$color = self::COLOR_UNANSWERED_QUESTION;
 				$icon_url = qa_opt($prefix.'icon_url_'.$index);
 				$pretext = qa_opt($prefix.'pretext_'.$index);
 				$username = isset($handle) ? $handle : qa_lang('main/anonymous');
@@ -113,13 +113,19 @@ class qa_mattermost_notifications_event {
 				$question_content = $params['text'];
 				$tags_with_links = $this->create_tags_with_links( $tags_in_question );
 				$category_with_link = $this->create_category_link( $category, $categoryid );
+				$question_id = $params['postid'];
+				$views = 0;
+				$answers = 0;
+				$action_callback_url = $site_url.'qa-plugin/mattermost-notifications/qa-mattermost-notifications-answer-polling.php';
 				
 				if( $webhook_url )
 				{
 					$notifier = new Mattermost\Mattermost( $webhook_url );
 					try
 					{	
-						$result = $notifier->message_room($channel_id, $bot_name, $user_full_name, $user_icon_url, $user_link, $title, $title_link, $question_content, $tags_with_links, $category_with_link, $color, $icon_url, $pretext );
+						$result = $notifier->message_room($channel_id, $bot_name, $user_full_name, $user_icon_url, $user_link, $title, 
+								$title_link, $question_content, $tags_with_links, $category_with_link, $color, $icon_url, $pretext,
+								$question_id, $views, $answers, $action_callback_url );
 					}
 					catch (Mattermost\Mattermost_Exception $e) 
 					{

@@ -3,8 +3,8 @@
   Mattermost Notifications
 
   File: qa-plugin/mattermost-notifications/Mattermost/Mattermost.php
-  Version: 0.4
-  Date: 2016-11-27
+  Version: 0.5
+  Date: 2017-12-10
   Description: Mattermost API to access channels
 */
 
@@ -59,9 +59,33 @@ class Mattermost {
 	public function message_room( $channel_id, $bot_name = 'AskAgfa', $author_name, $author_icon, $author_link, $title, $title_link, $message, $tags, $category, 
 								$color = self::COLOR_GREEN,
 								$icon_url = 'http://ask.agfahealthcare.com/qa-theme/q2a_logo_3_v12_small.gif',
-								$pretext = 'A new question has arrived:' ) 
+								$pretext = 'A new question has arrived:',
+								$question_id, $views, $answers, $action_callback_url ) 
 	{
-		$args = array(
+		$args = self::createMattermostMessageAttachment( $channel_id, $bot_name, $author_name, $author_icon, $author_link, $title, $title_link, $message, $tags, $category, 
+								$color,	$icon_url, $pretext, $question_id, $views, $answers, $action_callback_url );
+		
+    $response = $this->make_request("rooms/message", $args, 'POST');
+    return ($response->status == 'sent');
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Helper functions
+  /////////////////////////////////////////////////////////////////////////////
+  
+	public static function createMattermostMessageAttachment( $channel_id, $bot_name, $author_name, $author_icon, $author_link, $title, $title_link, $message, $tags, $category, 
+								$color,	$icon_url, $pretext, $question_id, $views, $answers, $action_callback_url )
+	{
+		$status = 'Answers: '.$answers.'  |  Views: '.$views.'    ('.date('Y-m-d h:m').')';
+		if( $answers == 0 )
+		{
+			$status = ':o:  '.$status;
+		}
+		else
+		{
+			$status = ':white_check_mark: '.$status;
+		}
+		return array(
 			'username' => utf8_encode($bot_name),
 			'icon_url' => utf8_encode($icon_url),
 			'channel' => utf8_encode($channel_id),
@@ -77,17 +101,36 @@ class Mattermost {
 				'title_link' 	=> utf8_encode($title_link),
 				'fields'		=> array( 
 										array( 'short' => true, 'title' => 'Tags:', 'value' => $tags ),
-										array( 'short' => true, 'title' => 'Category:', 'value' => $category )
+										array( 'short' => true, 'title' => 'Category:', 'value' => $category ),
+										array( 'short' => true, 'title' => 'Status:', 'value' => $status )
+									),
+				'actions'		=> array( array( 
+											'name' => 'Refresh Status', 
+											'integration' => array( 
+														'url' => $action_callback_url, 
+														'context' => array(
+																		'channel_id' 	=> $channel_id,
+																		'bot_name'		=> $bot_name,
+																		'author_name'	=> $author_name, 
+																		'author_icon'	=> $author_icon, 
+																		'author_link'	=> $author_link, 
+																		'title'			=> $title,
+																		'title_link'	=> $title_link, 
+																		'message'		=> $message, 
+																		'tags'			=> $tags, 
+																		'category'		=> $category, 
+																		'color'			=> $color,
+																		'icon_url'		=> $icon_url,
+																		'pretext'		=> $pretext,
+																		'question_id'	=> $question_id,
+																		'action_callback_url' => $action_callback_url
+																		)
+														) 
+											)
 									)
-			))
-    );
-    $response = $this->make_request("rooms/message", $args, 'POST');
-    return ($response->status == 'sent');
-  }
-
-  /////////////////////////////////////////////////////////////////////////////
-  // Helper functions
-  /////////////////////////////////////////////////////////////////////////////
+				))
+			);
+	}
 
   /**
    * Performs a curl request
