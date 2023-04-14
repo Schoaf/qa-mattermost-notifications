@@ -105,8 +105,16 @@ class qa_mattermost_notifications_event {
 				$icon_url = qa_opt($prefix.'icon_url_'.$index);
 				$pretext = qa_opt($prefix.'pretext_'.$index);
 				$username = isset($handle) ? $handle : qa_lang('main/anonymous');
-				$user_full_name = $this->get_user_full_name( $handle );
-				$user_icon_url = $this->get_user_icon( $handle );
+				try {
+					$user_full_name = $this->get_user_full_name( $handle );
+				} catch (Exception $e) {
+					$user_full_name = $username;
+				}
+				try {
+					$user_icon_url = $this->get_user_icon( $handle );
+				} catch (Exception $e) {
+					$user_icon_url = "";
+				}
 				$user_link = $site_url."/user/".$username;
 				$title = $params['title'];
 				$title_link = qa_q_path($params['postid'], $params['title'], true);
